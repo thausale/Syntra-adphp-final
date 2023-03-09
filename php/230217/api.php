@@ -66,9 +66,18 @@ switch ($args['qsparts'][1]) {
     $track = new Track($db);
     $limit = 50;
 
+    if (isset($args["qsparts"][2]) && !empty($args["qsparts"][2])) {
 
-    $id = $args["qsparts"][2];
-    $response = $track->getById($id);
+      $id = $args["qsparts"][2];
+      $response->data = $track->getById($id)[0];
+
+      if (empty($response->data)) {
+        $response->error = "Data is empty";
+      }
+    } else {
+      $response->error = "This is not a valid endpoint.";
+    }
+
 
     break;
 
