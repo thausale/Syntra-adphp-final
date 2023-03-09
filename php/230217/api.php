@@ -24,9 +24,31 @@ switch ($args['qsparts'][1]) {
     $limit = 50;
 
     $filters = [];
+    $allowed_filters = [
+      'genre',
+      'artist_name',
+      'track_id'
+    ];
+
+    foreach ($_GET as $key => $value) {
+      if (!in_array($key, $allowed_filters) && $key !== 'page' && $key != 'qs') {
+        http_response_code(500);
+        $response->error = "$key is not a valid filter.";
+        break 2;
+      }
+    }
+
+    foreach ($allowed_filters as $allowed_filter) {
+      if (isset($args[$allowed_filter])) {
+        $filters[$allowed_filter] = $args[$allowed_filter];
+      }
+    }
 
     if (isset($args['genre'])) {
       $filters['genre'] = $args['genre'];
+    }
+    if (isset($args['track_id'])) {
+      $filters['track_id'] = $args['track_id'];
     }
 
     if (isset($args['artist_name'])) {
@@ -46,7 +68,28 @@ switch ($args['qsparts'][1]) {
       $response->page = (int)$args['page'];
     }
 
-    $response->results = $track->getAll(($response->page - 1) * $limit, $limit, $filters);
+    // if (isset($filters['track_id']) || isset($filters['genre']) || isset($filters['artist_name'])) {
+    //   $response->error = "not a valid search item";
+    // }
+    // $filtercount = 0;
+
+    // isset($filters['track_id']) ? $filtercount++ : "";
+    // isset($filters['genre']) ? $filtercount++ : "";
+    // isset($filters['artist_name']) ? $filtercount++ : "";
+    // if (count($filters) != $filtercount) {
+    //   $response->error = "wrong filter";
+    //   exit;
+    // } else {
+    //   exit;
+    //   $response->results = $track->getAll(($response->page - 1) * $limit, $limit, $filters);
+    // } We moesten zorgen dat als we een query meegeven die we niet kennen we een error tonen
+    // ik vind het ambetant omdat Kristof heel anders werkte dan ik,
+    //Hij doet de getal in de index, ik deed de getal in de class en gaf het object terug
+    //Nu kan ik het moeilijk tegenhouden zonder alles te herschrijven, en ik ben mijn oude code kwijtgeraakt
+    // var_dump($args);
+
+
+
 
     if ($response->page < $response->total_pages) {
       $filters['page'] = $response->page + 1;
@@ -55,8 +98,12 @@ switch ($args['qsparts'][1]) {
 
     if ($response->page > 1) {
       $filters['page'] = $response->page - 1;
-      $response->previous_page_url = 'http://localhost/230217/index.php?page=' . http_build_query($filters);
-    }
+      $response->next_page_url = 'http://localhost/230217/api/v1/tracks?' . http_build_query($filters);
+    };
+
+    // if (count($filters) > 0 && $response->results == []) {
+    //   $response->error = "no data found";
+    // }
 
     break;
 
