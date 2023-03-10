@@ -6,6 +6,7 @@ $args = $_REQUEST;
 $args['qsparts'] = explode('/', $args['qs']);
 
 $response = new StdClass;
+$response->referer = $_SERVER["HTTP_REFERER"];
 
 switch ($args['qsparts'][1]) {
   case 'tracks':
@@ -62,17 +63,67 @@ switch ($args['qsparts'][1]) {
     break;
 
   case 'track':
-    if (isset($args['qsparts'][2]) && !empty($args['qsparts'][2])) {
-      $db = new Db();
-      $track = new Track($db);
-      $response->results = $track->getById($args['qsparts'][2]);
-    } else {
-      http_response_code(404);
-      $response->error = "This is not a valid endpoint.";
+
+    switch ($_SERVER['REQUEST_METHOD']) {
+      case 'POST':
+        $db = new Db();
+        $track = new Track($db);
+
+        $body = $_POST;
+        // var_dump($body);
+
+
+        $id = $track->insertIntoDb($body);
+        $response->message = "successfully inserted with ID $id";
+
+        break;
+
+
+      case "GET":
+        $db = new Db();
+
+
+        //Code to get the data from the table for validation
+        // $columns = $db->describeTable();
+        // foreach ($columns as $column) {
+        //   echo "{$column['Field']} ({$column['Type']})\n";
+        // }
+        // var_dump($columns);
+
+
+        // var_dump($args['qsparts'][2]);
+        if (isset($args['qsparts'][2]) && !empty($args['qsparts'][2])) {
+          $db = new Db();
+          $track = new Track($db);
+          $response->results = $track->getById($args['qsparts'][2]);
+        } else {
+          http_response_code(404);
+          $response->error = "This is not a valid endpoint.";
+        }
+        break;
+
+      case "DELETE":
+        if (isset($args['qsparts'][2]) && !empty($args['qsparts'][2])) {
+          $id = $args['qsparts'][2];
+          $db = new Db();
+          $track = new Track($db);
+          $response->message = $track->removeById($args['qsparts'][2]);
+        }
+        break;
+
+      default:
+        // handle unsupported HTTP methods
+        http_response_code(404);
+        $response->error = "This is not a valid endpoint.";
+        break;
     }
     break;
 
+
+
+
   default:
+    // handle unsupported HTTP methods
     http_response_code(404);
     $response->error = "This is not a valid endpoint.";
     break;
