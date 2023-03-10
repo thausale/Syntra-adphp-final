@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require "includes/Db.class.php";
 require "includes/Track.class.php";
@@ -26,10 +29,10 @@ $return = (object)[
 ];
 
 if ($page < $pages) {
-  $return->next_page_url= 'http://localhost/230217/index.php?page=' . $page + 1;
+  $return->next_page_url = 'http://localhost/230217/index.php?page=' . $page + 1;
 }
 if ($page > 1) {
-  $return->previous_page_url= 'http://localhost/230217/index.php?page=' . $page - 1;
+  $return->previous_page_url = 'http://localhost/230217/index.php?page=' . $page - 1;
 }
 
 

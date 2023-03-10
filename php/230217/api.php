@@ -5,16 +5,6 @@ require "includes/Track.class.php";
 $args = $_REQUEST;
 $args['qsparts'] = explode('/', $args['qs']);
 
-
-
-
-
-
-
-
-
-
-
 $response = new StdClass;
 
 switch ($args['qsparts'][1]) {
@@ -44,17 +34,6 @@ switch ($args['qsparts'][1]) {
       }
     }
 
-    if (isset($args['genre'])) {
-      $filters['genre'] = $args['genre'];
-    }
-    if (isset($args['track_id'])) {
-      $filters['track_id'] = $args['track_id'];
-    }
-
-    if (isset($args['artist_name'])) {
-      $filters['artist_name'] = $args['artist_name'];
-    }
-
     $response->page = 1;
     $response->total_items = $track->getTotal($filters);
     $response->total_pages = ceil($response->total_items / $limit);
@@ -68,28 +47,7 @@ switch ($args['qsparts'][1]) {
       $response->page = (int)$args['page'];
     }
 
-    // if (isset($filters['track_id']) || isset($filters['genre']) || isset($filters['artist_name'])) {
-    //   $response->error = "not a valid search item";
-    // }
-    // $filtercount = 0;
-
-    // isset($filters['track_id']) ? $filtercount++ : "";
-    // isset($filters['genre']) ? $filtercount++ : "";
-    // isset($filters['artist_name']) ? $filtercount++ : "";
-    // if (count($filters) != $filtercount) {
-    //   $response->error = "wrong filter";
-    //   exit;
-    // } else {
-    //   exit;
-    //   $response->results = $track->getAll(($response->page - 1) * $limit, $limit, $filters);
-    // } We moesten zorgen dat als we een query meegeven die we niet kennen we een error tonen
-    // ik vind het ambetant omdat Kristof heel anders werkte dan ik,
-    //Hij doet de getal in de index, ik deed de getal in de class en gaf het object terug
-    //Nu kan ik het moeilijk tegenhouden zonder alles te herschrijven, en ik ben mijn oude code kwijtgeraakt
-    // var_dump($args);
-
-
-
+    $response->results = $track->getAll(($response->page - 1) * $limit, $limit, $filters);
 
     if ($response->page < $response->total_pages) {
       $filters['page'] = $response->page + 1;
@@ -98,37 +56,24 @@ switch ($args['qsparts'][1]) {
 
     if ($response->page > 1) {
       $filters['page'] = $response->page - 1;
-      $response->next_page_url = 'http://localhost/230217/api/v1/tracks?' . http_build_query($filters);
-    };
-
-    // if (count($filters) > 0 && $response->results == []) {
-    //   $response->error = "no data found";
-    // }
+      $response->previous_page_url = 'http://localhost/230217/index.php?page=' . http_build_query($filters);
+    }
 
     break;
 
-
-  case "track":
-    $db = new Db();
-    $track = new Track($db);
-    $limit = 50;
-
-    if (isset($args["qsparts"][2]) && !empty($args["qsparts"][2])) {
-
-      $id = $args["qsparts"][2];
-      $response->data = $track->getById($id)[0];
-
-      if (empty($response->data)) {
-        $response->error = "Data is empty";
-      }
+  case 'track':
+    if (isset($args['qsparts'][2]) && !empty($args['qsparts'][2])) {
+      $db = new Db();
+      $track = new Track($db);
+      $response->results = $track->getById($args['qsparts'][2]);
     } else {
+      http_response_code(404);
       $response->error = "This is not a valid endpoint.";
     }
-
-
     break;
 
   default:
+    http_response_code(404);
     $response->error = "This is not a valid endpoint.";
     break;
 }
